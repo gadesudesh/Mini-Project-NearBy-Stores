@@ -1,0 +1,16 @@
+# Dependencies (friends will install these themselves)
+node_modules/
+
+# Environment variables (contains secrets)
+.env
+
+# Build files
+frontend/build/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
