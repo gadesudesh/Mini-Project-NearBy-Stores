@@ -20,6 +20,7 @@ app.use('/api/shops', require('./routes/shops'));
 app.use('/api/products', require('./routes/products'));
 app.use('/api/reviews', require('./routes/reviews'));
 app.use('/api/routes', require('./routes/routeRoutes'));
+app.use('/api/chatbot', require('./routes/chatbot'));
 
 app.use((err, req, res, next) => {
   console.error(err.stack);

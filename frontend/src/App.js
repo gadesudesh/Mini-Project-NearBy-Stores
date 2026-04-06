@@ -6,6 +6,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
+import Chatbot from './components/Chatbot';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
@@ -70,6 +71,7 @@ function App() {
         <div className="min-h-screen bg-gray-50">
           <Navbar />
           <AppRoutes />
+          <Chatbot />
         </div>
         <ToastContainer position="top-right" autoClose={3000} hideProgressBar newestOnTop closeOnClick pauseOnHover theme="light" />
       </Router>
