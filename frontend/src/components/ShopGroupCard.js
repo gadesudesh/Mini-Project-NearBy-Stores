@@ -38,7 +38,7 @@ const ShopGroupCard = ({ shopData }) => {
               {distance !== undefined && (
                 <span className="flex items-center gap-1 text-xs text-primary-600 font-medium bg-primary-50 px-2 py-1 rounded-full flex-shrink-0 ml-2">
                   <FiNavigation size={10} />
-                  {distance} km
+                  {shop.airDistance} km
                 </span>
               )}
             </div>
