@@ -1,3 +1,4 @@
+
 // import React, { useState, useEffect } from 'react';
 // import { useNavigate } from 'react-router-dom';
 // import { useAuth } from '../../context/AuthContext';
@@ -7,6 +8,20 @@
 // import LoadingSpinner from '../../components/LoadingSpinner';
 // import VerifiedBadge from '../../components/VerifiedBadge';
 // import { FiSearch, FiMapPin, FiNavigation, FiFilter } from 'react-icons/fi';
+
+// // ✅ Haversine Formula for accurate frontend distance calculation
+// const calculateDistance = (lat1, lon1, lat2, lon2) => {
+//   const toRad = (deg) => (deg * Math.PI) / 180;
+//   const R = 6371;
+//   const dLat = toRad(lat2 - lat1);
+//   const dLon = toRad(lon2 - lon1);
+//   const a =
+//     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+//     Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+//     Math.sin(dLon / 2) * Math.sin(dLon / 2);
+//   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+//   return parseFloat((R * c).toFixed(2));
+// };
 
 // const CustomerDashboard = () => {
 //   const { user, location } = useAuth();
@@ -28,7 +43,21 @@
 //       const res = await API.get(
 //         `/shops/nearby?lat=${location.lat}&lng=${location.lng}&radius=${radius}`
 //       );
-//       setShops(res.data.shops);
+
+//       // ✅ Recalculate distances on frontend using actual user location
+//       const shopsWithRealDistance = (res.data.shops || []).map((shop) => {
+//         if (shop.location && shop.location.coordinates) {
+//           const shopLng = shop.location.coordinates[0];
+//           const shopLat = shop.location.coordinates[1];
+//           const realDistance = calculateDistance(
+//             location.lat, location.lng, shopLat, shopLng
+//           );
+//           return { ...shop, distance: realDistance };
+//         }
+//         return shop;
+//       });
+
+//       setShops(shopsWithRealDistance);
 //     } catch (err) {
 //       console.error(err);
 //     } finally {
@@ -126,12 +155,21 @@
 //           <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
 //             <FiMapPin className="text-primary-600" /> Shops Near You
 //           </h2>
-//           <button
-//             onClick={() => setShowFilters(!showFilters)}
-//             className="flex items-center gap-2 btn-secondary py-2 px-4 text-sm"
-//           >
-//             <FiFilter size={16} /> Filters
-//           </button>
+//           <div className="flex items-center gap-3">
+//             {/* ✅ Show current location being used */}
+//             {location && (
+//               <span className="text-xs text-gray-400 hidden sm:flex items-center gap-1">
+//                 <FiNavigation size={10} />
+//                 📍 {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
+//               </span>
+//             )}
+//             <button
+//               onClick={() => setShowFilters(!showFilters)}
+//               className="flex items-center gap-2 btn-secondary py-2 px-4 text-sm"
+//             >
+//               <FiFilter size={16} /> Filters
+//             </button>
+//           </div>
 //         </div>
 
 //         {showFilters && (
@@ -175,7 +213,6 @@
 //           />
 //         )}
 
-//         {/* Routing instructions */}
 //         {location && shops.length > 0 && (
 //           <p className="text-xs text-gray-400 mt-2 text-center">
 //             💡 Click any shop marker on the map to see driving directions
@@ -223,7 +260,6 @@
 //                       <h3 className="text-lg font-bold text-gray-900 group-hover:text-primary-600 transition-colors">
 //                         {shop.shopName}
 //                       </h3>
-//                       {/* ✅ VERIFIED BADGE */}
 //                       <VerifiedBadge status={shop.verification?.status} size="sm" />
 //                     </div>
 //                   </div>
@@ -274,7 +310,6 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 import VerifiedBadge from '../../components/VerifiedBadge';
 import { FiSearch, FiMapPin, FiNavigation, FiFilter } from 'react-icons/fi';
 
-// ✅ Haversine Formula for accurate frontend distance calculation
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
   const toRad = (deg) => (deg * Math.PI) / 180;
   const R = 6371;
@@ -289,11 +324,19 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
 };
 
 const CustomerDashboard = () => {
-  const { user, location } = useAuth();
+  const {
+    user,
+    location,
+    locationLoading,
+    locationError,
+    locationPermission,
+    requestLocation,
+  } = useAuth();
+
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [shops, setShops] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [sortBy, setSortBy] = useState('distance');
   const [radius, setRadius] = useState(10);
   const [showFilters, setShowFilters] = useState(false);
@@ -309,7 +352,6 @@ const CustomerDashboard = () => {
         `/shops/nearby?lat=${location.lat}&lng=${location.lng}&radius=${radius}`
       );
 
-      // ✅ Recalculate distances on frontend using actual user location
       const shopsWithRealDistance = (res.data.shops || []).map((shop) => {
         if (shop.location && shop.location.coordinates) {
           const shopLng = shop.location.coordinates[0];
@@ -362,6 +404,108 @@ const CustomerDashboard = () => {
     };
     return map[category] || '🏪';
   };
+
+  // ✅ Location Permission Screen — shown when location is not available
+  if (!location && !locationLoading) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-20">
+        <div className="card p-8 text-center">
+          {/* Icon */}
+          <div className="w-20 h-20 bg-primary-50 rounded-full flex items-center justify-center mx-auto mb-6">
+            <FiMapPin className="text-primary-600" size={36} />
+          </div>
+
+          {/* Title */}
+          <h2 className="text-2xl font-bold text-gray-900 mb-3">
+            Enable Location Access
+          </h2>
+
+          {/* Different messages based on error type */}
+          {locationError === 'denied' ? (
+            <>
+              <p className="text-gray-500 mb-6 leading-relaxed">
+                Location access was denied. To find nearby shops, please enable
+                location in your browser settings:
+              </p>
+              <div className="bg-gray-50 rounded-xl p-4 mb-6 text-left text-sm text-gray-600 space-y-2">
+                <p className="font-semibold text-gray-700">📱 On Mobile:</p>
+                <p>
+                  <strong>Android Chrome:</strong> Tap the{' '}
+                  <span className="bg-gray-200 px-1.5 py-0.5 rounded text-xs">🔒</span>{' '}
+                  icon in the address bar → Permissions → Location → Allow
+                </p>
+                <p>
+                  <strong>iPhone Safari:</strong> Settings → Safari → Location →
+                  Allow
+                </p>
+                <hr className="my-2" />
+                <p className="font-semibold text-gray-700">💻 On Desktop:</p>
+                <p>
+                  Click the{' '}
+                  <span className="bg-gray-200 px-1.5 py-0.5 rounded text-xs">🔒</span>{' '}
+                  icon in the address bar → Site Settings → Location → Allow
+                </p>
+              </div>
+            </>
+          ) : locationError === 'timeout' ? (
+            <p className="text-gray-500 mb-6 leading-relaxed">
+              Location request timed out. Please make sure your GPS is turned on
+              and try again.
+            </p>
+          ) : locationError === 'unavailable' ? (
+            <p className="text-gray-500 mb-6 leading-relaxed">
+              Your location could not be determined. Please make sure GPS/Location
+              Services are turned on in your device settings.
+            </p>
+          ) : (
+            <p className="text-gray-500 mb-6 leading-relaxed">
+              We need your location to show nearby shops and the best prices
+              around you. Click below to enable location access.
+            </p>
+          )}
+
+          {/* Action Buttons */}
+          <div className="space-y-3">
+            <button
+              onClick={requestLocation}
+              className="btn-primary w-full py-3.5 text-lg flex items-center justify-center gap-2"
+            >
+              <FiNavigation size={20} />
+              {locationError === 'denied'
+                ? 'Try Again'
+                : 'Allow Location Access'}
+            </button>
+
+            {/* Optional: Let them search without location */}
+            <button
+              onClick={() => navigate('/customer/search?q=')}
+              className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              Skip for now — Search products instead
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ Loading screen while getting location
+  if (locationLoading && !location) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-20">
+        <div className="card p-8 text-center">
+          <div className="w-16 h-16 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin mx-auto mb-6"></div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">
+            Getting Your Location...
+          </h2>
+          <p className="text-gray-500">
+            Please tap <strong>"Allow"</strong> when prompted to enable location
+            access.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -421,7 +565,6 @@ const CustomerDashboard = () => {
             <FiMapPin className="text-primary-600" /> Shops Near You
           </h2>
           <div className="flex items-center gap-3">
-            {/* ✅ Show current location being used */}
             {location && (
               <span className="text-xs text-gray-400 hidden sm:flex items-center gap-1">
                 <FiNavigation size={10} />
@@ -468,7 +611,6 @@ const CustomerDashboard = () => {
           </div>
         )}
 
-        {/* MAP WITH ROUTING ENABLED */}
         {location && (
           <MapView
             userLocation={location}
@@ -502,7 +644,6 @@ const CustomerDashboard = () => {
               onClick={() => navigate(`/customer/shop/${shop._id}`)}
               className="card overflow-hidden cursor-pointer hover:border-primary-200 group"
             >
-              {/* Shop Image */}
               {shop.image && (
                 <div className="w-full h-40 overflow-hidden">
                   <img
