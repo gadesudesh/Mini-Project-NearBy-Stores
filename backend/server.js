@@ -47,16 +47,25 @@ connectDB();
 
 const app = express();
 
-// ✅ ONLY CHANGE - Updated CORS
+// ✅ Updated CORS with Vercel URL
 app.use(cors({
   origin: [
-    'https://your-app.vercel.app',   // ← Your actual Vercel URL
-    'http://localhost:3000'
+    'https://mini-project-near-by-stores.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:5173'
   ],
   credentials: true
 }));
 
 app.use(express.json());
+
+// ✅ Root route
+app.get('/', (req, res) => {
+  res.json({ 
+    success: true, 
+    message: 'Welcome to NearBy Stores API',
+  });
+});
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Near By Store API is running' });
