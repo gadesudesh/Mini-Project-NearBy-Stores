@@ -537,6 +537,7 @@ const CustomerDashboard = () => {
 
         <div className="flex flex-wrap gap-2 mt-4">
           {[
+          
             'Refrigerator',
             'Laptop',
             'Cricket Bat',
@@ -546,6 +547,7 @@ const CustomerDashboard = () => {
             'Watch',
             'Trimmer',
             'Drill',
+            'Cake',
           ].map((tag) => (
             <button
               key={tag}
